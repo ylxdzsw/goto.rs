@@ -1,20 +1,19 @@
-#![feature(llvm_asm)]
+#![allow(named_asm_labels)]
 
 #[macro_export]
 macro_rules! label {
     ( $($label:tt)* ) => {
-        llvm_asm!(concat!($(stringify!($label),)* ":"))
+        core::arch::asm!(concat!($(stringify!($label),)* ":"))
     }
 }
 
 #[macro_export]
 macro_rules! goto {
     ( $($label:tt)* ) => {
-        if cfg!(target_arch="arm") || cfg!(target_arch="aarch64") {
-            llvm_asm!(concat!("b ", $(stringify!($label),)*))
-        } else if cfg!(target_arch="x86") || cfg!(target_arch="x86_64") {
-            llvm_asm!(concat!("jmp ", $(stringify!($label),)*))
-        }
+        #[cfg(any(target_arch="arm", target_arch="aarch64"))]
+        core::arch::asm!(concat!("b ", $(stringify!($label),)*));
+        #[cfg(any(target_arch="x86", target_arch="x86_64"))]
+        core::arch::asm!(concat!("jmp ", $(stringify!($label),)*));
     } 
 }
 
@@ -66,17 +65,17 @@ mod tests {
         let mut a = 3;
 
         unsafe {
-            label!(1);
+            label!(3);
 
             if a <= 3 {
                 a += 1;
-                goto!(2f);
+                goto!(4f);
             }
 
             if a > 6 {
-                label!(2);
+                label!(4);
                 assert!(a <= 6);
-                goto!(1b);
+                goto!(3b);
             }
 
             assert_eq!(a, 4);

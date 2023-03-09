@@ -1,5 +1,3 @@
-#![feature(llvm_asm)]
-
 use goto::{goto, label};
 
 fn main() {
